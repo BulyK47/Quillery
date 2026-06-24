@@ -41,7 +41,7 @@ function frameHtml(b64, title, sub) {
   return `<!doctype html><html><head><meta charset="utf-8"><style>
     * { margin: 0; box-sizing: border-box; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; }
     body { width: 1280px; height: 800px; overflow: hidden;
-      background: radial-gradient(120% 120% at 80% 10%, #7c6cf5 0%, #6366f1 45%, #8b5cf6 100%); }
+      background: radial-gradient(130% 130% at 78% 8%, #4f46e5 0%, #312e81 52%, #4c1d95 100%); }
     .wrap { display: flex; height: 100%; align-items: center; }
     .left { flex: 1; padding: 0 64px 0 88px; color: #fff; }
     .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; opacity: .95; }
@@ -73,7 +73,7 @@ function frameHtml(b64, title, sub) {
   await page.evaluate((d) => {
     localStorage.setItem("prompts", JSON.stringify(d.prompts));
     localStorage.setItem("categories", JSON.stringify(d.categories));
-    localStorage.setItem("theme", "light");
+    localStorage.setItem("theme", "dark");
   }, demo);
   await page.reload();
   await page.waitForSelector("h1");
