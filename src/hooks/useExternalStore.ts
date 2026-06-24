@@ -84,5 +84,7 @@ export function useExternalStore({
       cancelled = true;
       clearTimeout(handle);
     };
-  }, [prompts, categories, backend]);
+    // refreshKey so choosing a sync folder seeds it immediately (not only after
+    // the next edit).
+  }, [prompts, categories, backend, refreshKey]);
 }

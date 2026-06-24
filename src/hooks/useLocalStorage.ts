@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 
 type SetValue<T> = (value: T | ((prev: T) => T)) => void;
 
@@ -25,6 +25,22 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, SetValue<T
       return initialValue;
     }
   });
+
+  // On first run, write the defaults to storage immediately so the initial
+  // data is persisted right away (and picked up by sync) instead of only after
+  // the first edit.
+  const seeded = useRef(false);
+  useEffect(() => {
+    if (seeded.current) return;
+    seeded.current = true;
+    try {
+      if (window.localStorage.getItem(key) === null) {
+        window.localStorage.setItem(key, JSON.stringify(stored));
+      }
+    } catch (err) {
+      console.error(`Error seeding localStorage key "${key}":`, err);
+    }
+  }, [key, stored]);
 
   const setValue = useCallback<SetValue<T>>(
     (value) => {
