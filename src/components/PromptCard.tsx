@@ -76,9 +76,10 @@ export function PromptCard({
 
   const handleCopyAsBlank = async () => {
     const stripped = prompt.content.replace(/\{\{[^}]+\}\}/g, "______");
+    // Toast only — don't flash the main Copy button green, since this copies a
+    // blank template, not the actual prompt.
     if (await copyToClipboard(stripped)) {
       toast.success("Copied as a blank template!");
-      flashCopied();
     } else {
       toast.error("Copy failed");
     }

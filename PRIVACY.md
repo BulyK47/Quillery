@@ -39,10 +39,12 @@ background; it never accesses your accounts or reads those pages.
 
 ## Permissions
 
-The browser extension requests a single permission:
+The browser extension requests two permissions:
 
 - **`sidePanel`** — used only to open Quillery's interface in the browser side
   panel when you click its toolbar icon.
+- **`storage`** — used to store your prompts, categories and settings locally
+  via `chrome.storage.local` so they persist reliably. No data is transmitted.
 
 It does **not** request access to your browsing history, the content of web
 pages, your tabs, or any host permissions.

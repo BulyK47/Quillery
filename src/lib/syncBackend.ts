@@ -34,12 +34,17 @@ interface ChromeLike {
   };
 }
 
+interface WriteResult {
+  ok: boolean;
+  error?: string;
+}
+
 interface DesktopLike {
   isElectron: boolean;
   sync?: {
     getFolder(): Promise<string | null>;
     read(): Promise<string | null>;
-    write(text: string): Promise<void>;
+    write(text: string): Promise<WriteResult | void>;
     onChange(cb: () => void): () => void;
   };
 }
@@ -104,9 +109,12 @@ export function electronBackend(desktop: Required<DesktopLike>): SyncBackend {
       return parseBackup(text); // reuse the validated parser
     },
     async save(data) {
-      await desktop.sync.write(
+      const res = await desktop.sync.write(
         JSON.stringify(buildBackup(data.prompts, data.categories), null, 2),
       );
+      if (res && res.ok === false) {
+        throw new Error(res.error || "write failed");
+      }
     },
     subscribe(cb) {
       return desktop.sync.onChange(cb);

@@ -8,20 +8,26 @@ const isDev = process.env.ELECTRON_DEV === "1";
 let mainWindow = null;
 let configPath = null;
 let watcher = null;
+// The exact text the app last wrote, so the watcher can ignore its own writes.
+let lastWrittenText = null;
 
 // ---- sync-folder storage --------------------------------------------------
 const DATA_FILE = "quillery-data.json";
 
 function readConfig() {
   try {
+    if (!fs.existsSync(configPath)) return {};
     return JSON.parse(fs.readFileSync(configPath, "utf8"));
-  } catch {
+  } catch (e) {
+    console.error("quillery-sync.json is unreadable/corrupt:", e);
     return {};
   }
 }
 function writeConfig(cfg) {
   try {
-    fs.writeFileSync(configPath, JSON.stringify(cfg));
+    const tmp = `${configPath}.tmp`;
+    fs.writeFileSync(tmp, JSON.stringify(cfg));
+    fs.renameSync(tmp, configPath); // atomic replace — never leaves a half file
   } catch (e) {
     console.error("writeConfig failed:", e);
   }
@@ -33,24 +39,49 @@ function dataFilePath() {
 
 function setupWatcher() {
   if (watcher) {
-    watcher.close();
+    try {
+      watcher.close();
+    } catch {
+      /* ignore */
+    }
     watcher = null;
   }
   const file = dataFilePath();
   if (!file) return;
+
+  let debounce = null;
+  const notifyIfChanged = async () => {
+    try {
+      const content = await fsp.readFile(file, "utf8");
+      // Ignore our own writes — otherwise write → watch → reload feedback loop.
+      if (content === lastWrittenText) return;
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send("sync:changed");
+      }
+    } catch {
+      /* file removed / temporarily unreadable (e.g. OneDrive offline) */
+    }
+  };
+
   try {
-    let debounce = null;
-    watcher = fs.watch(path.dirname(file), (_event, filename) => {
-      if (filename && filename !== DATA_FILE) return;
+    // The filename arg is unreliable (can be null on rename), so verify by
+    // reading the data file rather than filtering on it.
+    watcher = fs.watch(path.dirname(file), () => {
       clearTimeout(debounce);
-      debounce = setTimeout(() => {
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send("sync:changed");
-        }
-      }, 300);
+      debounce = setTimeout(notifyIfChanged, 300);
+    });
+    watcher.on("error", (e) => {
+      console.error("sync watcher error — re-arming:", e);
+      try {
+        watcher.close();
+      } catch {
+        /* ignore */
+      }
+      watcher = null;
+      setTimeout(setupWatcher, 2000); // re-arm (handles the folder going offline)
     });
   } catch (e) {
-    console.error("sync watcher failed:", e);
+    console.error("sync watcher setup failed:", e);
   }
 }
 
@@ -90,12 +121,17 @@ function registerSyncIpc() {
 
   ipcMain.handle("sync:write", async (_e, text) => {
     const file = dataFilePath();
-    if (!file || typeof text !== "string") return;
+    if (!file) return { ok: false, error: "no-folder" };
+    if (typeof text !== "string") return { ok: false, error: "bad-input" };
+    if (text.length > 20_000_000) return { ok: false, error: "too-large" };
     try {
       await fsp.mkdir(path.dirname(file), { recursive: true });
+      lastWrittenText = text; // mark self-originated so the watcher ignores it
       await fsp.writeFile(file, text, "utf8");
+      return { ok: true };
     } catch (e) {
       console.error("sync write failed:", e);
+      return { ok: false, error: String((e && e.message) || e) };
     }
   });
 }

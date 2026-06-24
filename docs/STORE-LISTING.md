@@ -43,8 +43,9 @@ else you're working in.
   anywhere.
 
 ✦ PRIVATE BY DESIGN
-• All data stays in your browser's local storage — no servers, no accounts, no
-  tracking, no analytics. The only permission requested is "sidePanel".
+• All data stays on your device — no servers, no accounts, no tracking, no
+  analytics. The only permissions requested are "sidePanel" and "storage", both
+  used purely to show and persist your prompts locally.
 
 Quillery is also available as a desktop app.
 ```

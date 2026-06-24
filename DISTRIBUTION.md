@@ -28,13 +28,16 @@ The `.zip` is what you upload. (You can also zip `dist-extension/` manually.)
 - Fill **Store listing** from [`docs/STORE-LISTING.md`](docs/STORE-LISTING.md)
   (name, summary, description, category, single-purpose, screenshots).
 - Fill **Privacy practices**: declare **no data collected**, add the privacy
-  policy URL, and justify the single `sidePanel` permission.
-- Upload the **128×128 icon** (`public/icons/icon128.png`) and **1–5
-  screenshots** at 1280×800.
+  policy URL, and justify **both** permissions (`sidePanel` and `storage`) —
+  the justification text is in [`docs/STORE-LISTING.md`](docs/STORE-LISTING.md).
+- Upload the **128×128 icon** (`public/icons/icon128.png`) and the **1280×800
+  screenshots** in [`store-assets/screenshots/`](store-assets/screenshots/)
+  (`store-1.png` … `store-4.png`).
 
 ### 4. Submit
 - Submit for review. First reviews typically take a few days. Because Quillery
-  requests only `sidePanel` and collects no data, it should review cleanly.
+  requests just `sidePanel` and `storage` and collects no data, it should review
+  cleanly.
 
 ### Edge Add-ons (bonus, same package)
 The exact same `.zip` works for the **Microsoft Edge Add-ons** store

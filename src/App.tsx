@@ -115,6 +115,7 @@ export default function App() {
     setPrompts,
     setCategories,
     refreshKey: syncRefresh,
+    onError: (msg) => toast.error("Sync error", { description: msg }),
   });
 
   const filtered = useMemo(() => {
