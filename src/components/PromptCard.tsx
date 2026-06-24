@@ -74,10 +74,10 @@ export function PromptCard({
     if (didCopy) flashCopied();
   };
 
-  const handleCopyWithoutVariables = async () => {
+  const handleCopyAsBlank = async () => {
     const stripped = prompt.content.replace(/\{\{[^}]+\}\}/g, "______");
     if (await copyToClipboard(stripped)) {
-      toast.success("Copied without variables!");
+      toast.success("Copied as a blank template!");
       flashCopied();
     } else {
       toast.error("Copy failed");
@@ -112,203 +112,216 @@ export function PromptCard({
       name: "Uncategorized",
     };
 
+  // Common actions are direct buttons; the rest live in the ⋮ menu.
+  const iconActions = (
+    <div className="flex items-center gap-1 shrink-0">
+      <Button
+        variant="outline"
+        size="icon"
+        className="size-8"
+        onClick={() => onTogglePin(prompt.id)}
+        aria-label={prompt.isPinned ? "Unpin" : "Pin"}
+        title={prompt.isPinned ? "Unpin" : "Pin"}
+      >
+        <Pin
+          className={cn("size-4", prompt.isPinned && "fill-primary text-primary")}
+        />
+      </Button>
+
+      <Button
+        variant="outline"
+        size="icon"
+        className="size-8"
+        onClick={() => onEdit(prompt)}
+        aria-label="Edit"
+        title="Edit"
+      >
+        <Pencil className="size-4" />
+      </Button>
+
+      {onDuplicate && (
+        <Button
+          variant="outline"
+          size="icon"
+          className="size-8"
+          onClick={() => onDuplicate(prompt)}
+          aria-label="Duplicate"
+          title="Duplicate"
+        >
+          <Files className="size-4" />
+        </Button>
+      )}
+
+      {onRate && (
+        <Button
+          variant="outline"
+          size="icon"
+          className="size-8"
+          onClick={() => onRate(prompt)}
+          aria-label="Rate"
+          title="Rate"
+        >
+          <Star className="size-4" />
+        </Button>
+      )}
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            className="size-8"
+            aria-label="More actions"
+            title="More actions"
+          >
+            <MoreVertical className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {onOptimize && (
+            <DropdownMenuItem onClick={() => onOptimize(prompt)}>
+              <Sparkles className="size-4 mr-2" />
+              Optimize with AI
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <ExternalLink className="size-4 mr-2" />
+              Open in
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              {HANDOFF_TARGETS.map((t) => (
+                <DropdownMenuItem
+                  key={t.id}
+                  onClick={() => handleOpenIn(t.id, t.name)}
+                >
+                  <span className="mr-2">{t.icon}</span>
+                  {t.name}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+          {promptHasVariables && (
+            <DropdownMenuItem onClick={handleCopyAsBlank}>
+              <Copy className="size-4 mr-2" />
+              Copy as blank template
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => onDelete(prompt.id)}
+            className="text-destructive focus:text-destructive"
+          >
+            <Trash2 className="size-4 mr-2" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+
   return (
     <Card
       className={cn(
         "group relative transition-all hover:shadow-md",
         prompt.isPinned && "ring-2 ring-primary",
-        isList ? "flex items-start gap-4 p-4" : "p-4",
+        isList ? "flex items-start gap-4 p-4" : "p-4 space-y-3",
       )}
     >
-      {prompt.isPinned && (
-        <div className="absolute top-2 right-2">
-          <Pin className="size-4 text-primary fill-primary" />
-        </div>
-      )}
-
-      <div className={cn("flex-1", !isList && "space-y-3")}>
-        <div className={cn("flex items-start", isList ? "gap-4 flex-1" : "gap-2")}>
-          <div className="flex-1 space-y-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-lg">{category.emoji}</span>
-              <Badge variant="secondary" className={category.color}>
-                {category.name}
-              </Badge>
-              {prompt.targetModel && prompt.targetModel !== "universal" && (
-                <ModelBadge model={prompt.targetModel} size="sm" />
-              )}
-              {prompt.usageCount > 0 && (
-                <span className="text-xs text-muted-foreground">
-                  {prompt.usageCount} {prompt.usageCount === 1 ? "use" : "uses"}
-                </span>
-              )}
-            </div>
-
-            {prompt.title && (
-              <h3 className="font-semibold text-lg line-clamp-1">
-                {prompt.title}
-              </h3>
-            )}
-
-            {prompt.rating && prompt.rating > 0 && (
-              <div className="flex items-center gap-2">
-                <StarRating rating={prompt.rating} readonly size="sm" />
-                <span className="text-xs text-muted-foreground">
-                  ({prompt.rating}/5)
-                </span>
-              </div>
-            )}
-
-            {prompt.tags && prompt.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {prompt.tags.map((tag, i) => (
-                  <Badge
-                    key={i}
-                    variant="outline"
-                    className="text-xs bg-purple-500/10 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400 border-purple-200 dark:border-purple-800"
-                  >
-                    #{tag}
-                  </Badge>
-                ))}
-              </div>
-            )}
-
-            <p
-              className={cn(
-                "text-sm text-muted-foreground whitespace-pre-wrap",
-                isList ? "line-clamp-2" : "line-clamp-3",
-              )}
-            >
-              {prompt.content}
-            </p>
-
-            <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
-              <span>{charCount} characters</span>
-              <span>•</span>
-              <span>~{tokenEstimate} tokens</span>
-              {promptHasVariables && (
-                <>
-                  <span>•</span>
-                  <Badge
-                    variant="secondary"
-                    className="bg-gray-500/10 text-gray-600 dark:bg-gray-500/20 dark:text-gray-400"
-                  >
-                    Variables
-                  </Badge>
-                </>
-              )}
-            </div>
-          </div>
-
-          {!isList && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-8 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
-                  aria-label="Prompt actions"
-                >
-                  <MoreVertical className="size-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onTogglePin(prompt.id)}>
-                  <Pin className="size-4 mr-2" />
-                  {prompt.isPinned ? "Unpin" : "Pin"}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onEdit(prompt)}>
-                  <Pencil className="size-4 mr-2" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <ExternalLink className="size-4 mr-2" />
-                    Open in
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent>
-                    {HANDOFF_TARGETS.map((t) => (
-                      <DropdownMenuItem
-                        key={t.id}
-                        onClick={() => handleOpenIn(t.id, t.name)}
-                      >
-                        <span className="mr-2">{t.icon}</span>
-                        {t.name}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-                {promptHasVariables && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleCopyWithoutVariables}>
-                      <Copy className="size-4 mr-2" />
-                      Copy (without variables)
-                    </DropdownMenuItem>
-                  </>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => onDelete(prompt.id)}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="size-4 mr-2" />
-                  Delete
-                </DropdownMenuItem>
-                {onOptimize && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => onOptimize(prompt)}>
-                      <Sparkles className="size-4 mr-2" />
-                      Optimize with AI
-                    </DropdownMenuItem>
-                  </>
-                )}
-                {onDuplicate && (
-                  <DropdownMenuItem onClick={() => onDuplicate(prompt)}>
-                    <Files className="size-4 mr-2" />
-                    Duplicate
-                  </DropdownMenuItem>
-                )}
-                {onRate && (
-                  <DropdownMenuItem onClick={() => onRate(prompt)}>
-                    <Star className="size-4 mr-2" />
-                    Rate
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+      <div className="flex-1 space-y-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-lg">{category.emoji}</span>
+          <Badge variant="secondary" className={category.color}>
+            {category.name}
+          </Badge>
+          {prompt.targetModel && prompt.targetModel !== "universal" && (
+            <ModelBadge model={prompt.targetModel} size="sm" />
+          )}
+          {prompt.usageCount > 0 && (
+            <span className="text-xs text-muted-foreground">
+              {prompt.usageCount} {prompt.usageCount === 1 ? "use" : "uses"}
+            </span>
           )}
         </div>
 
-        <div className={cn("flex gap-2", isList && "ml-auto")}>
-          <Button onClick={handleCopy} className="flex-1" size={isList ? "default" : "sm"}>
-            {copied ? (
-              <>
-                <Check className="size-4 mr-2" />
-                Copied!
-              </>
-            ) : (
-              <>
-                <Copy className="size-4 mr-2" />
-                Copy
-              </>
-            )}
-          </Button>
-          {isList && (
+        {prompt.title && (
+          <h3 className="font-semibold text-lg line-clamp-1">{prompt.title}</h3>
+        )}
+
+        {prompt.rating && prompt.rating > 0 && (
+          <div className="flex items-center gap-2">
+            <StarRating rating={prompt.rating} readonly size="sm" />
+            <span className="text-xs text-muted-foreground">
+              ({prompt.rating}/5)
+            </span>
+          </div>
+        )}
+
+        {prompt.tags && prompt.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {prompt.tags.map((tag, i) => (
+              <Badge
+                key={i}
+                variant="outline"
+                className="text-xs bg-purple-500/10 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400 border-purple-200 dark:border-purple-800"
+              >
+                #{tag}
+              </Badge>
+            ))}
+          </div>
+        )}
+
+        <p
+          className={cn(
+            "text-sm text-muted-foreground whitespace-pre-wrap",
+            isList ? "line-clamp-2" : "line-clamp-3",
+          )}
+        >
+          {prompt.content}
+        </p>
+
+        <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+          <span>{charCount} characters</span>
+          <span>•</span>
+          <span>~{tokenEstimate} tokens</span>
+          {promptHasVariables && (
             <>
-              <Button variant="outline" size="icon" onClick={() => onTogglePin(prompt.id)}>
-                <Pin className={cn("size-4", prompt.isPinned && "fill-current")} />
-              </Button>
-              <Button variant="outline" size="icon" onClick={() => onEdit(prompt)}>
-                <Pencil className="size-4" />
-              </Button>
-              <Button variant="outline" size="icon" onClick={() => onDelete(prompt.id)}>
-                <Trash2 className="size-4" />
-              </Button>
+              <span>•</span>
+              <Badge
+                variant="secondary"
+                className="bg-gray-500/10 text-gray-600 dark:bg-gray-500/20 dark:text-gray-400"
+              >
+                Variables
+              </Badge>
             </>
           )}
         </div>
+      </div>
+
+      <div
+        className={cn(
+          "flex flex-wrap items-center gap-2",
+          isList && "ml-auto flex-nowrap",
+        )}
+      >
+        <Button
+          onClick={handleCopy}
+          className="flex-1 min-w-[120px]"
+          size={isList ? "default" : "sm"}
+        >
+          {copied ? (
+            <>
+              <Check className="size-4 mr-2" />
+              Copied!
+            </>
+          ) : (
+            <>
+              <Copy className="size-4 mr-2" />
+              Copy
+            </>
+          )}
+        </Button>
+        {iconActions}
       </div>
     </Card>
   );
