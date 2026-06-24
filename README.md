@@ -21,6 +21,7 @@ TypeScript codebase ships to **three targets**:
 - **Prompt Optimizer** — local, rule-based rewriting for ChatGPT / Claude / Gemini (no API, no keys, nothing leaves your machine)
 - **Open in ChatGPT / Claude / Gemini** — one-click handoff that opens a prompt in your existing logged-in chat session (no account linking, no key)
 - **Portable backup** — export a single `quillery-backup-*.json` and import it on another device (Merge or Replace); plus Markdown export for sharing
+- **Cross-device sync (optional, no accounts)** — desktop: point Quillery at a OneDrive/Dropbox folder and it keeps a JSON file in sync across your computers; extension: stored in `chrome.storage.local`
 - **Dark / light / system** theme, keyboard shortcuts
 - Data is stored locally in `localStorage` (works identically in all three targets)
 

@@ -46,8 +46,10 @@ import { VariablesDialog } from "@/components/VariablesDialog";
 import { OptimizeDialog } from "@/components/OptimizeDialog";
 import { RatingDialog } from "@/components/RatingDialog";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useExternalStore } from "@/hooks/useExternalStore";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useTheme } from "@/hooks/useTheme";
+import { SyncSettings } from "@/components/SyncSettings";
 import { DEFAULT_CATEGORIES, defaultPrompts } from "@/lib/defaults";
 import { searchPrompts } from "@/lib/search";
 import { exportMarkdown } from "@/lib/export";
@@ -103,6 +105,17 @@ export default function App() {
 
   const [importOpen, setImportOpen] = useState(false);
   const [importData, setImportData] = useState<BackupData | null>(null);
+
+  // Optional cross-device sync (Electron sync folder / extension chrome.storage).
+  // No-op on the plain web app.
+  const [syncRefresh, setSyncRefresh] = useState(0);
+  useExternalStore({
+    prompts,
+    categories,
+    setPrompts,
+    setCategories,
+    refreshKey: syncRefresh,
+  });
 
   const filtered = useMemo(() => {
     let list = prompts;
@@ -548,8 +561,9 @@ export default function App() {
             <SheetTitle>Settings</SheetTitle>
             <SheetDescription>Manage categories and preferences</SheetDescription>
           </SheetHeader>
-          <div className="mt-6 flex-1 overflow-hidden">
+          <div className="mt-6 flex-1 overflow-y-auto pr-1 space-y-4">
             <CategoryManager categories={categories} onSave={setCategories} />
+            <SyncSettings onChanged={() => setSyncRefresh((k) => k + 1)} />
           </div>
         </SheetContent>
       </Sheet>

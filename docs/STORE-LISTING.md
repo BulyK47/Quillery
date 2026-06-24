@@ -59,6 +59,9 @@ search, fill in, optimize and copy reusable text prompts from a side panel.
 - **sidePanel** — "Quillery's entire interface is shown in the browser side
   panel. This permission is required to open that panel when the user clicks the
   toolbar icon. No host or content permissions are requested."
+- **storage** — "Used to store the user's own prompts and settings locally via
+  chrome.storage.local so they persist reliably. No data is transmitted; nothing
+  leaves the device."
 
 ## Data usage disclosures (Privacy practices tab)
 - Does this item collect user data? **No.**

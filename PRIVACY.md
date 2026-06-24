@@ -8,8 +8,13 @@ sell any of your data.**
 ## What data Quillery handles
 
 - **Your prompts, categories, tags, ratings and settings** are stored **locally
-  on your device** using the browser's / app's `localStorage`. They never leave
-  your machine.
+  on your device** — `localStorage` (web), `chrome.storage.local` (extension),
+  or a JSON file in a folder you choose (desktop "Sync folder"). They never
+  leave your machine, and Quillery never sends them anywhere.
+- **Sync folder (desktop, optional):** if you pick a folder, Quillery writes a
+  `quillery-data.json` file there. If that folder happens to be inside a cloud
+  drive you control (OneDrive, Dropbox, …), that service syncs the file for you
+  under your own account — Quillery is not involved in the transfer.
 - Quillery has **no account system, no login, and no server**. There is nothing
   to sign up for.
 
