@@ -32,7 +32,8 @@ The `.zip` is what you upload. (You can also zip `dist-extension/` manually.)
   the justification text is in [`docs/STORE-LISTING.md`](docs/STORE-LISTING.md).
 - Upload the **128×128 icon** (`public/icons/icon128.png`) and the **1280×800
   screenshots** in [`store-assets/screenshots/`](store-assets/screenshots/)
-  (`store-1.png` … `store-4.png`).
+  (`store-1.jpg` … `store-4.jpg`). Optional promo tiles: `promo-small.jpg`
+  (440×280) and `promo-marquee.jpg` (1400×560).
 
 ### 4. Submit
 - Submit for review. First reviews typically take a few days. Because Quillery

@@ -37,6 +37,25 @@ const captions = {
   "app-4-stats.png": { title: "Know what you use", sub: "Totals, estimated tokens, a category breakdown and your most-used prompts." },
 };
 
+function promoHtml(w, h, big) {
+  return `<!doctype html><html><head><meta charset="utf-8"><style>
+    * { margin: 0; box-sizing: border-box; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; }
+    body { width: ${w}px; height: ${h}px; overflow: hidden; display: flex; align-items: center;
+      justify-content: center; text-align: center; color: #fff;
+      background: radial-gradient(130% 130% at 75% 12%, #4f46e5 0%, #312e81 52%, #4c1d95 100%); }
+    .c { display: flex; flex-direction: column; align-items: center; gap: ${big ? 20 : 8}px; padding: 24px; }
+    .logo { width: ${big ? 96 : 52}px; height: ${big ? 96 : 52}px; border-radius: ${big ? 26 : 14}px;
+      background: rgba(255,255,255,.16); display: flex; align-items: center; justify-content: center;
+      font-size: ${big ? 52 : 28}px; }
+    h1 { font-size: ${big ? 72 : 30}px; font-weight: 800; letter-spacing: -1px; }
+    p { font-size: ${big ? 26 : 13}px; color: rgba(255,255,255,.9); max-width: ${big ? 760 : 380}px; line-height: 1.4; }
+  </style></head><body><div class="c">
+    <div class="logo">🪶</div>
+    <h1>Quillery</h1>
+    <p>Organize, optimize &amp; reuse your AI prompts — private and local.</p>
+  </div></body></html>`;
+}
+
 function frameHtml(b64, title, sub) {
   return `<!doctype html><html><head><meta charset="utf-8"><style>
     * { margin: 0; box-sizing: border-box; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; }
@@ -110,7 +129,7 @@ function frameHtml(b64, title, sub) {
   await page.waitForTimeout(400);
   await shot("app-4-stats.png");
 
-  // compose branded 1280x800 store images
+  // compose branded 1280x800 store images — JPEG (no alpha) for the Web Store.
   const ctx2 = await browser.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 });
   const page2 = await ctx2.newPage();
   let i = 1;
@@ -118,12 +137,24 @@ function frameHtml(b64, title, sub) {
     const b64 = readFileSync(join(outDir, file)).toString("base64");
     await page2.setContent(frameHtml(b64, cap.title, cap.sub));
     await page2.waitForTimeout(250);
-    await page2.screenshot({ path: join(outDir, `store-${i}.png`) });
+    await page2.screenshot({ path: join(outDir, `store-${i}.jpg`), type: "jpeg", quality: 95 });
     i++;
   }
 
+  // promo tiles (optional, also JPEG)
+  for (const pr of [
+    { name: "promo-small.jpg", w: 440, h: 280, big: false },
+    { name: "promo-marquee.jpg", w: 1400, h: 560, big: true },
+  ]) {
+    const c = await browser.newContext({ viewport: { width: pr.w, height: pr.h }, deviceScaleFactor: 1 });
+    const p = await c.newPage();
+    await p.setContent(promoHtml(pr.w, pr.h, pr.big));
+    await p.waitForTimeout(200);
+    await p.screenshot({ path: join(outDir, pr.name), type: "jpeg", quality: 95 });
+  }
+
   await browser.close();
-  console.log(`Saved ${i - 1} store screenshots + app shots to store-assets/screenshots/`);
+  console.log(`Saved ${i - 1} store screenshots (.jpg) + 2 promo tiles + app shots to store-assets/screenshots/`);
 })().catch((e) => {
   console.error(e);
   process.exit(1);
